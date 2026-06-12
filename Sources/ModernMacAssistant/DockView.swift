@@ -5,21 +5,31 @@ struct DockView: View {
     @State private var settings = DockSettings()
 
     var body: some View {
-        SectionPanel(title: "程序坞行为", symbol: "dock.rectangle") {
-            VStack(alignment: .leading, spacing: 16) {
+        SectionPanel(title: "Dock", symbol: "dock.rectangle") {
+            VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("显示/隐藏动画速度")
+                    Text("动画速度")
+                        .frame(width: 72, alignment: .leading)
                     Slider(value: $settings.hideDelay, in: 0...1.2, step: 0.01)
                     Text("\(settings.hideDelay, specifier: "%.2f")s")
                         .monospacedDigit()
                         .frame(width: 58, alignment: .trailing)
                 }
 
-                Toggle("禁止调节程序坞大小", isOn: $settings.lockSize)
-                Toggle("鼠标滑过堆栈时高亮", isOn: $settings.highlightStacks)
-                Toggle("使用隐藏的吮吸最小化动画", isOn: $settings.useSuckEffect)
-                Toggle("启用单应用程序模式", isOn: $settings.singleAppMode)
-                Toggle("用鼠标滚轮打开堆栈", isOn: $settings.scrollToOpen)
+                Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 8) {
+                    GridRow {
+                        Toggle("锁定大小", isOn: $settings.lockSize)
+                        Toggle("堆栈高亮", isOn: $settings.highlightStacks)
+                    }
+                    GridRow {
+                        Toggle("吮吸动画", isOn: $settings.useSuckEffect)
+                        Toggle("单应用模式", isOn: $settings.singleAppMode)
+                    }
+                    GridRow {
+                        Toggle("滚轮打开堆栈", isOn: $settings.scrollToOpen)
+                        EmptyView()
+                    }
+                }
 
                 HStack {
                     PrimaryButton(title: "应用", symbol: "checkmark") {
@@ -37,4 +47,3 @@ struct DockView: View {
         }
     }
 }
-

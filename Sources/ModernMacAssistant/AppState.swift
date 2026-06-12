@@ -3,7 +3,7 @@ import SwiftUI
 
 @MainActor
 final class AppState: ObservableObject {
-    @Published var selectedSection: AssistantSection = .overview
+    @Published var selectedSection: AssistantSection = .dock
     @Published var logEntries: [LogEntry] = []
     @Published var isRunning = false
 
@@ -41,11 +41,11 @@ final class AppState: ObservableObject {
 
 enum AssistantSection: String, CaseIterable, Identifiable {
     case overview = "概览"
-    case dock = "程序坞"
+    case dock = "Dock"
     case launchpad = "启动台"
     case screenshots = "截图"
-    case apps = "应用修复"
-    case system = "系统信息"
+    case apps = "修复"
+    case system = "信息"
     case logs = "日志"
 
     var id: String { rawValue }
@@ -92,4 +92,3 @@ enum LogStatus {
         }
     }
 }
-

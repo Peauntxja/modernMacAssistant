@@ -1,56 +1,76 @@
 import SwiftUI
+import AppKit
 
 struct ContentView: View {
     @EnvironmentObject private var appState: AppState
+    private let compactSections: [AssistantSection] = [.dock, .launchpad, .screenshots, .apps, .system]
 
     var body: some View {
-        NavigationSplitView {
-            SidebarView()
-                .navigationSplitViewColumnWidth(min: 210, ideal: 230, max: 260)
-        } detail: {
-            ZStack {
-                Color(nsColor: .windowBackgroundColor)
-                    .ignoresSafeArea()
-
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
-                        HeaderView(section: appState.selectedSection)
-
-                        switch appState.selectedSection {
-                        case .overview:
-                            OverviewView()
-                        case .dock:
-                            DockView()
-                        case .launchpad:
-                            LaunchpadView()
-                        case .screenshots:
-                            ScreenshotView()
-                        case .apps:
-                            AppRepairView()
-                        case .system:
-                            SystemInfoView()
-                        case .logs:
-                            LogsView()
-                        }
+        VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 10) {
+                    Image(nsImage: NSApplication.shared.applicationIconImage)
+                        .resizable()
+                        .frame(width: 28, height: 28)
+                    Text("Mac 工具箱")
+                        .font(.system(size: 18, weight: .semibold))
+                    Spacer()
+                    if appState.isRunning {
+                        ProgressView()
+                            .controlSize(.small)
                     }
-                    .padding(24)
-                    .frame(maxWidth: 960, alignment: .leading)
                 }
+
+                Picker("工具", selection: $appState.selectedSection) {
+                    ForEach(compactSections) { section in
+                        Label(section.rawValue, systemImage: section.symbol).tag(section)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+            }
+            .padding(.horizontal, 18)
+            .padding(.top, 14)
+            .padding(.bottom, 10)
+
+            Divider()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    activeTool
+
+                    DisclosureGroup {
+                        LogsView()
+                    } label: {
+                        Label("执行日志", systemImage: "list.bullet.rectangle")
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                    .padding(.top, 2)
+                }
+                .padding(16)
             }
         }
+        .background(Color(nsColor: .windowBackgroundColor))
     }
-}
 
-private struct SidebarView: View {
-    @EnvironmentObject private var appState: AppState
-
-    var body: some View {
-        List(AssistantSection.allCases, selection: $appState.selectedSection) { section in
-            Label(section.rawValue, systemImage: section.symbol)
-                .tag(section)
-                .padding(.vertical, 4)
+    @ViewBuilder
+    private var activeTool: some View {
+        switch appState.selectedSection {
+        case .dock:
+            DockView()
+        case .launchpad:
+            LaunchpadView()
+        case .screenshots:
+            ScreenshotView()
+        case .apps:
+            AppRepairView()
+        case .system:
+            SystemInfoView()
+        case .overview:
+            DockView()
+        case .logs:
+            LogsView()
         }
-        .navigationTitle("Mac 工具箱")
     }
 }
 
@@ -95,10 +115,10 @@ struct SectionPanel<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Label(title, systemImage: symbol)
-                .font(.system(size: 16, weight: .semibold))
+                .font(.system(size: 14, weight: .semibold))
             content
         }
-        .padding(18)
+        .padding(14)
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
@@ -112,10 +132,10 @@ struct PrimaryButton: View {
     var body: some View {
         Button(action: action) {
             Label(title, systemImage: symbol)
-                .frame(minWidth: 112)
+                .frame(minWidth: 82)
         }
         .buttonStyle(.borderedProminent)
-        .controlSize(.large)
+        .controlSize(.regular)
     }
 }
 
@@ -129,7 +149,6 @@ struct SecondaryButton: View {
             Label(title, systemImage: symbol)
         }
         .buttonStyle(.bordered)
-        .controlSize(.large)
+        .controlSize(.regular)
     }
 }
-

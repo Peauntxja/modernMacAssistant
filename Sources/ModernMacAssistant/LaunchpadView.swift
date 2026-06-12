@@ -6,15 +6,17 @@ struct LaunchpadView: View {
     @State private var columns = 8
 
     var body: some View {
-        SectionPanel(title: "启动台网格", symbol: "square.grid.3x3") {
-            VStack(alignment: .leading, spacing: 16) {
-                Stepper(value: $rows, in: 4...12) {
-                    Text("行数: \(rows)")
-                        .monospacedDigit()
-                }
-                Stepper(value: $columns, in: 4...12) {
-                    Text("列数: \(columns)")
-                        .monospacedDigit()
+        SectionPanel(title: "启动台", symbol: "square.grid.3x3") {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 18) {
+                    Stepper(value: $rows, in: 4...12) {
+                        Text("行 \(rows)")
+                            .monospacedDigit()
+                    }
+                    Stepper(value: $columns, in: 4...12) {
+                        Text("列 \(columns)")
+                            .monospacedDigit()
+                    }
                 }
 
                 HStack {
@@ -33,4 +35,3 @@ struct LaunchpadView: View {
         }
     }
 }
-

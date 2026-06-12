@@ -7,7 +7,7 @@ struct AppRepairView: View {
 
     var body: some View {
         SectionPanel(title: "应用修复", symbol: "app.badge.checkmark") {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text(selectedApp?.path ?? "尚未选择应用")
                         .lineLimit(1)
@@ -22,7 +22,7 @@ struct AppRepairView: View {
                 Toggle("使用管理员权限执行", isOn: $useAdmin)
 
                 HStack {
-                    PrimaryButton(title: "移除隔离属性", symbol: "shield.slash") {
+                    PrimaryButton(title: "去隔离", symbol: "shield.slash") {
                         guard let selectedApp else { return }
                         appState.run("移除隔离属性") {
                             try await AssistantService.removeQuarantine(appURL: selectedApp, asAdmin: useAdmin)
@@ -34,19 +34,20 @@ struct AppRepairView: View {
                             try await AssistantService.resign(appURL: selectedApp, asAdmin: useAdmin)
                         }
                     }
+                }
+                .disabled(selectedApp == nil)
+
+                HStack {
                     SecondaryButton(title: "安装命令行工具", symbol: "terminal") {
                         appState.run("安装 Xcode Command Line Tools") {
                             try await AssistantService.installCommandLineTools()
                         }
                     }
+                    Text("重签名前需要 Command Line Tools。")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
                 }
-                .disabled(selectedApp == nil)
-
-                Text("重签名需要已安装 Xcode Command Line Tools。移除隔离属性只会处理你选择的应用。")
-                    .font(.system(size: 13))
-                    .foregroundStyle(.secondary)
             }
         }
     }
 }
-

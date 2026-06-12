@@ -8,7 +8,7 @@ struct SystemInfoView: View {
 
     var body: some View {
         SectionPanel(title: "本机信息", symbol: "desktopcomputer") {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     PrimaryButton(title: "刷新", symbol: "arrow.clockwise") {
                         load()
@@ -31,7 +31,7 @@ struct SystemInfoView: View {
                             GridRow {
                                 Text(row.title)
                                     .foregroundStyle(.secondary)
-                                    .frame(width: 110, alignment: .leading)
+                                    .frame(width: 78, alignment: .leading)
                                 Text(row.value)
                                     .textSelection(.enabled)
                             }
@@ -116,4 +116,3 @@ enum SystemInfoCollector {
             .first { line in keys.contains { line.contains($0) } }
     }
 }
-
