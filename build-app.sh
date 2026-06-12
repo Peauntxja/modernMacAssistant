@@ -22,6 +22,7 @@ xcrun swiftc \
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/ModernMacAssistant"
 cp "$ROOT/Info.plist" "$APP/Contents/Info.plist"
+cp "$ROOT/Resources/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
 
 /usr/bin/codesign --force --deep --sign - "$APP"
 echo "$APP"
