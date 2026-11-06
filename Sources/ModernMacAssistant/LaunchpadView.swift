@@ -1,6 +1,10 @@
 import SwiftUI
 
 struct LaunchpadView: View {
+    static var isAvailable: Bool {
+        FileManager.default.fileExists(atPath: "/System/Applications/Launchpad.app")
+    }
+
     @EnvironmentObject private var appState: AppState
     @State private var rows = 6
     @State private var columns = 8

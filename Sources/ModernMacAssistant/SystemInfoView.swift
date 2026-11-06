@@ -79,16 +79,23 @@ enum SystemInfoCollector {
         rows.append(.init(title: "线程", value: sysctlInt("machdep.cpu.thread_count")))
         rows.append(.init(title: "内存", value: ByteCountFormatter.string(fromByteCount: Int64(processInfo.physicalMemory), countStyle: .memory)))
 
-        if let sip = try? await CommandRunner.run("/usr/bin/csrutil", ["status"]) {
-            rows.append(.init(title: "SIP", value: sip.output.trimmingCharacters(in: .whitespacesAndNewlines)))
-        }
+        async let sip = CommandRunner.run("/usr/bin/csrutil", ["status"])
+        async let hardware = CommandRunner.run("/usr/sbin/system_profiler", ["SPHardwareDataType"])
+        async let displays = CommandRunner.run("/usr/sbin/system_profiler", ["SPDisplaysDataType"])
 
-        if let hardware = try? await CommandRunner.run("/usr/sbin/system_profiler", ["SPHardwareDataType"]) {
-            rows.append(.init(title: "硬件摘要", value: firstUsefulLine(from: hardware.output, matching: ["Model Name", "Model Identifier"]) ?? "已读取"))
+        if let sip = try? await sip {
+            let text = sip.output.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !text.isEmpty {
+                rows.append(.init(title: "SIP", value: text))
+            }
         }
-
-        if let displays = try? await CommandRunner.run("/usr/sbin/system_profiler", ["SPDisplaysDataType"]) {
-            rows.append(.init(title: "显示/GPU", value: firstUsefulLine(from: displays.output, matching: ["Chipset Model", "Display Type", "Resolution"]) ?? "已读取"))
+        if let hardware = try? await hardware,
+           let line = firstUsefulLine(from: hardware.output, matching: ["Model Name", "型号名称", "Model Identifier", "机型标识符"]) {
+            rows.append(.init(title: "机型", value: line))
+        }
+        if let displays = try? await displays,
+           let line = firstUsefulLine(from: displays.output, matching: ["Chipset Model", "芯片组型号", "Resolution", "分辨率"]) {
+            rows.append(.init(title: "显示", value: line))
         }
 
         return rows
@@ -96,23 +103,25 @@ enum SystemInfoCollector {
 
     private static func sysctlString(_ name: String) -> String {
         var size = 0
-        sysctlbyname(name, nil, &size, nil, 0)
+        guard sysctlbyname(name, nil, &size, nil, 0) == 0, size > 1 else { return "未知" }
         var buffer = [CChar](repeating: 0, count: size)
-        sysctlbyname(name, &buffer, &size, nil, 0)
+        guard sysctlbyname(name, &buffer, &size, nil, 0) == 0 else { return "未知" }
         return String(cString: buffer)
     }
 
     private static func sysctlInt(_ name: String) -> String {
         var value: Int32 = 0
         var size = MemoryLayout<Int32>.size
-        sysctlbyname(name, &value, &size, nil, 0)
+        guard sysctlbyname(name, &value, &size, nil, 0) == 0 else { return "未知" }
         return "\(value)"
     }
 
     private static func firstUsefulLine(from text: String, matching keys: [String]) -> String? {
-        text
+        guard let line = text
             .split(separator: "\n")
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .first { line in keys.contains { line.contains($0) } }
+            .map({ $0.trimmingCharacters(in: .whitespaces) })
+            .first(where: { line in keys.contains { line.contains($0) } }) else { return nil }
+        let value = line.split(separator: ":", maxSplits: 1).last.map { $0.trimmingCharacters(in: .whitespaces) } ?? ""
+        return value.isEmpty ? line : value
     }
 }

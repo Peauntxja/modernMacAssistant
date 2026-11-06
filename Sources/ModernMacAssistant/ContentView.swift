@@ -3,7 +3,7 @@ import AppKit
 
 struct ContentView: View {
     @EnvironmentObject private var appState: AppState
-    private let compactSections: [AssistantSection] = [.dock, .launchpad, .screenshots, .apps, .system]
+    private var compactSections: [AssistantSection] { AssistantSection.tools }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -66,43 +66,6 @@ struct ContentView: View {
             AppRepairView()
         case .system:
             SystemInfoView()
-        case .overview:
-            DockView()
-        case .logs:
-            LogsView()
-        }
-    }
-}
-
-private struct HeaderView: View {
-    let section: AssistantSection
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Label(section.rawValue, systemImage: section.symbol)
-                .font(.system(size: 28, weight: .semibold))
-            Text(subtitle)
-                .foregroundStyle(.secondary)
-                .font(.system(size: 14))
-        }
-    }
-
-    private var subtitle: String {
-        switch section {
-        case .overview:
-            "常用 macOS 隐藏设置、应用修复和系统信息集中管理。"
-        case .dock:
-            "调整程序坞行为，应用后会自动重启 Dock。"
-        case .launchpad:
-            "修改启动台网格，行列数建议保持 4 到 12。"
-        case .screenshots:
-            "配置系统截图格式、阴影、缩略图、文件名前缀和保存位置。"
-        case .apps:
-            "处理应用隔离属性和 ad-hoc 重签名。"
-        case .system:
-            "读取本机硬件、系统、SIP、CPU 和显示信息。"
-        case .logs:
-            "查看最近执行的命令和系统返回。"
         }
     }
 }

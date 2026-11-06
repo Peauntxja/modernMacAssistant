@@ -6,28 +6,30 @@ final class AppState: ObservableObject {
     @Published var selectedSection: AssistantSection = .dock
     @Published var logEntries: [LogEntry] = []
     @Published var isRunning = false
+    private var inflight = 0
 
     func run(_ title: String, _ operation: @escaping () async throws -> CommandResult) {
+        inflight += 1
         isRunning = true
-        append(.init(title: title, status: .running, detail: "正在执行..."))
+        let id = UUID()
+        append(.init(id: id, title: title, status: .running, detail: "正在执行..."))
 
         Task {
+            let status: LogStatus
+            let detail: String
             do {
                 let result = try await operation()
-                await MainActor.run {
-                    self.append(.init(
-                        title: title,
-                        status: result.exitCode == 0 ? .success : .failure,
-                        detail: result.displayText
-                    ))
-                    self.isRunning = false
-                }
+                status = result.exitCode == 0 ? .success : .failure
+                detail = result.displayText
             } catch {
-                await MainActor.run {
-                    self.append(.init(title: title, status: .failure, detail: error.localizedDescription))
-                    self.isRunning = false
-                }
+                status = .failure
+                detail = error.localizedDescription
             }
+            if let index = logEntries.firstIndex(where: { $0.id == id }) {
+                logEntries[index] = .init(id: id, title: title, status: status, detail: detail)
+            }
+            inflight -= 1
+            isRunning = inflight > 0
         }
     }
 
@@ -40,35 +42,43 @@ final class AppState: ObservableObject {
 }
 
 enum AssistantSection: String, CaseIterable, Identifiable {
-    case overview = "概览"
     case dock = "Dock"
     case launchpad = "启动台"
     case screenshots = "截图"
     case apps = "修复"
     case system = "信息"
-    case logs = "日志"
 
     var id: String { rawValue }
 
     var symbol: String {
         switch self {
-        case .overview: "sparkles"
         case .dock: "dock.rectangle"
         case .launchpad: "square.grid.3x3"
         case .screenshots: "camera.viewfinder"
         case .apps: "app.badge.checkmark"
         case .system: "desktopcomputer"
-        case .logs: "list.bullet.rectangle"
         }
+    }
+
+    static var tools: [AssistantSection] {
+        allCases.filter { $0 != .launchpad || LaunchpadView.isAvailable }
     }
 }
 
 struct LogEntry: Identifiable {
-    let id = UUID()
-    let date = Date()
+    let id: UUID
+    let date: Date
     let title: String
     let status: LogStatus
     let detail: String
+
+    init(id: UUID = UUID(), date: Date = Date(), title: String, status: LogStatus, detail: String) {
+        self.id = id
+        self.date = date
+        self.title = title
+        self.status = status
+        self.detail = detail
+    }
 }
 
 enum LogStatus {

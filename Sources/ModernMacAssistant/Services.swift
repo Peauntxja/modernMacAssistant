@@ -7,19 +7,11 @@ enum AssistantService {
         "'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'"
     }
 
-    static func restartDock() async throws -> CommandResult {
-        try await CommandRunner.killall("Dock")
-    }
-
-    static func restartSystemUIServer() async throws -> CommandResult {
-        try await CommandRunner.killall("SystemUIServer")
-    }
-
     static func resetLaunchpad() async throws -> CommandResult {
         try await CommandRunner.runShell("""
         /usr/bin/defaults delete com.apple.dock springboard-rows 2>/dev/null || true
         /usr/bin/defaults delete com.apple.dock springboard-columns 2>/dev/null || true
-        /usr/bin/killall Dock
+        /usr/bin/killall Dock || true
         """)
     }
 
@@ -27,7 +19,7 @@ enum AssistantService {
         try await CommandRunner.runShell("""
         /usr/bin/defaults write com.apple.dock springboard-rows -int \(rows)
         /usr/bin/defaults write com.apple.dock springboard-columns -int \(columns)
-        /usr/bin/killall Dock
+        /usr/bin/killall Dock || true
         """)
     }
 
@@ -36,7 +28,7 @@ enum AssistantService {
         for key in autohide-time-modifier mineffect scroll-to-open single-app mouse-over-hilite-stack size-immutable; do
           /usr/bin/defaults delete com.apple.dock "$key" 2>/dev/null || true
         done
-        /usr/bin/killall Dock
+        /usr/bin/killall Dock || true
         """)
     }
 
@@ -49,7 +41,7 @@ enum AssistantService {
         /usr/bin/defaults write com.apple.dock single-app -bool \(settings.singleAppMode)
         /usr/bin/defaults write com.apple.dock mouse-over-hilite-stack -bool \(settings.highlightStacks)
         /usr/bin/defaults write com.apple.dock size-immutable -bool \(settings.lockSize)
-        /usr/bin/killall Dock
+        /usr/bin/killall Dock || true
         """)
     }
 
@@ -58,21 +50,24 @@ enum AssistantService {
         for key in disable-shadow include-date show-thumbnail name location type; do
           /usr/bin/defaults delete com.apple.screencapture "$key" 2>/dev/null || true
         done
-        /usr/bin/killall SystemUIServer
+        /usr/bin/killall SystemUIServer || true
         """)
     }
 
     static func updateScreenshots(settings: ScreenshotSettings) async throws -> CommandResult {
-        let name = settings.filePrefix == "无前缀" ? "" : settings.filePrefix
+        let name = settings.filePrefix.trimmingCharacters(in: .whitespacesAndNewlines)
+        let nameLine = name.isEmpty
+            ? "/usr/bin/defaults delete com.apple.screencapture name 2>/dev/null || true"
+            : "/usr/bin/defaults write com.apple.screencapture name -string \(shellQuote(name))"
         let location = settings.saveLocation.path
         return try await CommandRunner.runShell("""
         /usr/bin/defaults write com.apple.screencapture disable-shadow -bool \(settings.disableShadow)
         /usr/bin/defaults write com.apple.screencapture include-date -bool \(settings.includeDate)
         /usr/bin/defaults write com.apple.screencapture show-thumbnail -bool \(settings.showThumbnail)
         /usr/bin/defaults write com.apple.screencapture type -string \(shellQuote(settings.format.rawValue))
-        /usr/bin/defaults write com.apple.screencapture name \(shellQuote(name))
-        /usr/bin/defaults write com.apple.screencapture location \(shellQuote(location))
-        /usr/bin/killall SystemUIServer
+        \(nameLine)
+        /usr/bin/defaults write com.apple.screencapture location -string \(shellQuote(location))
+        /usr/bin/killall SystemUIServer || true
         """)
     }
 

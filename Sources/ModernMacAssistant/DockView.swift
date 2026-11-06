@@ -8,7 +8,7 @@ struct DockView: View {
         SectionPanel(title: "Dock", symbol: "dock.rectangle") {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("动画速度")
+                    Text("隐藏时长")
                         .frame(width: 72, alignment: .leading)
                     Slider(value: $settings.hideDelay, in: 0...1.2, step: 0.01)
                     Text("\(settings.hideDelay, specifier: "%.2f")s")

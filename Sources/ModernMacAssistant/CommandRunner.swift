@@ -20,18 +20,23 @@ struct CommandResult {
 enum CommandRunner {
     static func run(_ executable: String, _ arguments: [String] = []) async throws -> CommandResult {
         try await withCheckedThrowingContinuation { continuation in
-            do {
-                let process = Process()
-                let outputPipe = Pipe()
-                let errorPipe = Pipe()
-                process.executableURL = URL(fileURLWithPath: executable)
-                process.arguments = arguments
-                process.standardOutput = outputPipe
-                process.standardError = errorPipe
+            let process = Process()
+            let outputPipe = Pipe()
+            let errorPipe = Pipe()
+            process.executableURL = URL(fileURLWithPath: executable)
+            process.arguments = arguments
+            process.standardOutput = outputPipe
+            process.standardError = errorPipe
 
-                process.terminationHandler = { process in
-                    let output = String(data: outputPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-                    let error = String(data: errorPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+            let outputHandle = outputPipe.fileHandleForReading
+            let errorHandle = errorPipe.fileHandleForReading
+            let outputTask = Task { outputHandle.readDataToEndOfFile() }
+            let errorTask = Task { errorHandle.readDataToEndOfFile() }
+
+            process.terminationHandler = { process in
+                Task {
+                    let output = String(data: await outputTask.value, encoding: .utf8) ?? ""
+                    let error = String(data: await errorTask.value, encoding: .utf8) ?? ""
                     continuation.resume(returning: CommandResult(
                         executable: executable,
                         arguments: arguments,
@@ -40,9 +45,13 @@ enum CommandRunner {
                         errorOutput: error
                     ))
                 }
+            }
 
+            do {
                 try process.run()
             } catch {
+                outputHandle.closeFile()
+                errorHandle.closeFile()
                 continuation.resume(throwing: error)
             }
         }
@@ -59,13 +68,5 @@ enum CommandRunner {
             ])
         }
         return try await run("/bin/zsh", ["-lc", script])
-    }
-
-    static func defaults(_ args: [String]) async throws -> CommandResult {
-        try await run("/usr/bin/defaults", args)
-    }
-
-    static func killall(_ name: String) async throws -> CommandResult {
-        try await run("/usr/bin/killall", [name])
     }
 }
