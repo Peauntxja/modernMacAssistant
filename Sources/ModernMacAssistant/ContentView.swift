@@ -62,6 +62,8 @@ struct ContentView: View {
             LaunchpadView()
         case .screenshots:
             ScreenshotView()
+        case .finder:
+            FinderView()
         case .apps:
             AppRepairView()
         case .system:

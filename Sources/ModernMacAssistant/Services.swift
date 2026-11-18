@@ -83,9 +83,46 @@ enum AssistantService {
         try await CommandRunner.runShell(screenshotsApplyScript(settings: settings))
     }
 
+    static func finderApplyScript(settings: FinderSettings) -> String {
+        """
+        /usr/bin/defaults write com.apple.finder AppleShowAllFiles -bool \(settings.showHiddenFiles)
+        /usr/bin/defaults write com.apple.finder ShowPathbar -bool \(settings.showPathBar)
+        /usr/bin/defaults write com.apple.finder ShowStatusBar -bool \(settings.showStatusBar)
+        /usr/bin/defaults write NSGlobalDomain AppleShowAllExtensions -bool \(settings.showAllExtensions)
+        /usr/bin/killall Finder || true
+        """
+    }
 
+    static func updateFinder(settings: FinderSettings) async throws -> CommandResult {
+        try await CommandRunner.runShell(finderApplyScript(settings: settings))
+    }
 
+    static func resetFinder() async throws -> CommandResult {
+        try await CommandRunner.runShell("""
+        /usr/bin/defaults delete com.apple.finder AppleShowAllFiles 2>/dev/null || true
+        /usr/bin/defaults delete com.apple.finder ShowPathbar 2>/dev/null || true
+        /usr/bin/defaults delete com.apple.finder ShowStatusBar 2>/dev/null || true
+        /usr/bin/defaults delete NSGlobalDomain AppleShowAllExtensions 2>/dev/null || true
+        /usr/bin/killall Finder || true
+        """)
+    }
 
+    static func loadFinderSettings() async -> FinderSettings {
+        var settings = FinderSettings()
+        if let value = await readBool(domain: "com.apple.finder", key: "AppleShowAllFiles") {
+            settings.showHiddenFiles = value
+        }
+        if let value = await readBool(domain: "com.apple.finder", key: "ShowPathbar") {
+            settings.showPathBar = value
+        }
+        if let value = await readBool(domain: "com.apple.finder", key: "ShowStatusBar") {
+            settings.showStatusBar = value
+        }
+        if let value = await readBool(domain: "NSGlobalDomain", key: "AppleShowAllExtensions") {
+            settings.showAllExtensions = value
+        }
+        return settings
+    }
 
 
 
@@ -221,6 +258,13 @@ struct ScreenshotSettings {
     var filePrefix = "截屏"
     var saveLocation = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first ?? URL(fileURLWithPath: NSHomeDirectory())
     var format: ScreenshotFormat = .png
+}
+
+struct FinderSettings {
+    var showHiddenFiles = false
+    var showPathBar = false
+    var showStatusBar = false
+    var showAllExtensions = false
 }
 
 enum ScreenshotFormat: String, CaseIterable, Identifiable {

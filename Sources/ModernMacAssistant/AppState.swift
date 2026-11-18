@@ -52,6 +52,7 @@ enum AssistantSection: String, CaseIterable, Identifiable {
     case dock = "Dock"
     case launchpad = "启动台"
     case screenshots = "截图"
+    case finder = "Finder"
     case apps = "修复"
     case system = "信息"
 
@@ -62,6 +63,7 @@ enum AssistantSection: String, CaseIterable, Identifiable {
         case .dock: "dock.rectangle"
         case .launchpad: "square.grid.3x3"
         case .screenshots: "camera.viewfinder"
+        case .finder: "folder"
         case .apps: "app.badge.checkmark"
         case .system: "desktopcomputer"
         }
