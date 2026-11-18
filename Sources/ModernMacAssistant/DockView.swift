@@ -33,17 +33,25 @@ struct DockView: View {
 
                 HStack {
                     PrimaryButton(title: "应用", symbol: "checkmark") {
-                        appState.run("应用 Dock 设置") {
+                        appState.run("应用 Dock 设置", {
                             try await AssistantService.updateDock(settings: settings)
-                        }
+                        }, onSuccess: load)
                     }
                     SecondaryButton(title: "恢复默认", symbol: "arrow.counterclockwise") {
-                        appState.run("恢复 Dock 默认设置") {
+                        appState.run("恢复 Dock 默认设置", {
                             try await AssistantService.resetDock()
-                        }
+                        }, onSuccess: load)
                     }
                 }
             }
+        }
+        .onAppear(perform: load)
+    }
+
+    private func load() {
+        Task {
+            let loaded = await AssistantService.loadDockSettings()
+            await MainActor.run { settings = loaded }
         }
     }
 }

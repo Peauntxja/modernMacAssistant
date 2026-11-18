@@ -8,7 +8,11 @@ final class AppState: ObservableObject {
     @Published var isRunning = false
     private var inflight = 0
 
-    func run(_ title: String, _ operation: @escaping () async throws -> CommandResult) {
+    func run(
+        _ title: String,
+        _ operation: @escaping () async throws -> CommandResult,
+        onSuccess: (() -> Void)? = nil
+    ) {
         inflight += 1
         isRunning = true
         let id = UUID()
@@ -30,6 +34,9 @@ final class AppState: ObservableObject {
             }
             inflight -= 1
             isRunning = inflight > 0
+            if status == .success {
+                onSuccess?()
+            }
         }
     }
 

@@ -25,16 +25,27 @@ struct LaunchpadView: View {
 
                 HStack {
                     PrimaryButton(title: "应用", symbol: "checkmark") {
-                        appState.run("设置启动台网格") {
+                        appState.run("设置启动台网格", {
                             try await AssistantService.setLaunchpad(rows: rows, columns: columns)
-                        }
+                        }, onSuccess: load)
                     }
                     SecondaryButton(title: "恢复默认", symbol: "arrow.counterclockwise") {
-                        appState.run("恢复启动台默认设置") {
+                        appState.run("恢复启动台默认设置", {
                             try await AssistantService.resetLaunchpad()
-                        }
+                        }, onSuccess: load)
                     }
                 }
+            }
+        }
+        .onAppear(perform: load)
+    }
+
+    private func load() {
+        Task {
+            let grid = await AssistantService.loadLaunchpadGrid()
+            await MainActor.run {
+                rows = grid.rows
+                columns = grid.columns
             }
         }
     }

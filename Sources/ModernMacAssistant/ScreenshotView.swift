@@ -53,17 +53,25 @@ struct ScreenshotView: View {
 
                 HStack {
                     PrimaryButton(title: "应用", symbol: "checkmark") {
-                        appState.run("应用截图设置") {
+                        appState.run("应用截图设置", {
                             try await AssistantService.updateScreenshots(settings: settings)
-                        }
+                        }, onSuccess: load)
                     }
                     SecondaryButton(title: "恢复默认", symbol: "arrow.counterclockwise") {
-                        appState.run("恢复截图默认设置") {
+                        appState.run("恢复截图默认设置", {
                             try await AssistantService.resetScreenshots()
-                        }
+                        }, onSuccess: load)
                     }
                 }
             }
+        }
+        .onAppear(perform: load)
+    }
+
+    private func load() {
+        Task {
+            let loaded = await AssistantService.loadScreenshotSettings()
+            await MainActor.run { settings = loaded }
         }
     }
 }
