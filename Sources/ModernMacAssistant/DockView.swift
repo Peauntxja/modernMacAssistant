@@ -42,6 +42,13 @@ struct DockView: View {
                             try await AssistantService.resetDock()
                         }, onSuccess: load)
                     }
+                    SecondaryButton(title: "复制命令", symbol: "doc.on.doc") {
+                        AssistantService.copyScript(
+                            AssistantService.dockApplyScript(settings: settings),
+                            title: "复制 Dock 命令",
+                            into: appState
+                        )
+                    }
                 }
             }
         }

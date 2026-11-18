@@ -62,6 +62,13 @@ struct ScreenshotView: View {
                             try await AssistantService.resetScreenshots()
                         }, onSuccess: load)
                     }
+                    SecondaryButton(title: "复制命令", symbol: "doc.on.doc") {
+                        AssistantService.copyScript(
+                            AssistantService.screenshotsApplyScript(settings: settings),
+                            title: "复制截图命令",
+                            into: appState
+                        )
+                    }
                 }
             }
         }

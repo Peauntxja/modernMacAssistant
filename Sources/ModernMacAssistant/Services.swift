@@ -91,6 +91,13 @@ enum AssistantService {
 
 
 
+    @MainActor
+    static func copyScript(_ script: String, title: String, into appState: AppState) {
+        let text = script.trimmingCharacters(in: .whitespacesAndNewlines)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        appState.append(.init(title: title, status: .success, detail: "已复制到剪贴板"))
+    }
 
     static func removeQuarantine(appURL: URL, asAdmin: Bool) async throws -> CommandResult {
         try await CommandRunner.runShell("/usr/bin/xattr -dr com.apple.quarantine \(shellQuote(appURL.path))", asAdmin: asAdmin)

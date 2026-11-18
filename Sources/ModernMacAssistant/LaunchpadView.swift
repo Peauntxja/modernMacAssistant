@@ -34,6 +34,13 @@ struct LaunchpadView: View {
                             try await AssistantService.resetLaunchpad()
                         }, onSuccess: load)
                     }
+                    SecondaryButton(title: "复制命令", symbol: "doc.on.doc") {
+                        AssistantService.copyScript(
+                            AssistantService.launchpadApplyScript(rows: rows, columns: columns),
+                            title: "复制启动台命令",
+                            into: appState
+                        )
+                    }
                 }
             }
         }
