@@ -29,7 +29,7 @@ enum AssistantService {
 
     static func resetDock() async throws -> CommandResult {
         try await CommandRunner.runShell("""
-        for key in autohide-time-modifier mineffect scroll-to-open single-app mouse-over-hilite-stack size-immutable; do
+        for key in autohide-time-modifier mineffect scroll-to-open single-app mouse-over-hilite-stack size-immutable orientation tilesize magnification largesize show-recents; do
           /usr/bin/defaults delete com.apple.dock "$key" 2>/dev/null || true
         done
         /usr/bin/killall Dock || true
@@ -38,6 +38,7 @@ enum AssistantService {
 
     static func dockApplyScript(settings: DockSettings) -> String {
         let effect = settings.useSuckEffect ? "suck" : "genie"
+        let showRecents = !settings.hideRecents
         return """
         /usr/bin/defaults write com.apple.dock autohide-time-modifier -float \(settings.hideDelay)
         /usr/bin/defaults write com.apple.dock mineffect -string \(effect)
@@ -45,6 +46,11 @@ enum AssistantService {
         /usr/bin/defaults write com.apple.dock single-app -bool \(settings.singleAppMode)
         /usr/bin/defaults write com.apple.dock mouse-over-hilite-stack -bool \(settings.highlightStacks)
         /usr/bin/defaults write com.apple.dock size-immutable -bool \(settings.lockSize)
+        /usr/bin/defaults write com.apple.dock orientation -string \(settings.position.rawValue)
+        /usr/bin/defaults write com.apple.dock tilesize -int \(settings.tileSize)
+        /usr/bin/defaults write com.apple.dock magnification -bool \(settings.magnification)
+        /usr/bin/defaults write com.apple.dock largesize -int \(settings.largeSize)
+        /usr/bin/defaults write com.apple.dock show-recents -bool \(showRecents)
         /usr/bin/killall Dock || true
         """
     }
@@ -213,6 +219,22 @@ enum AssistantService {
         if let value = await readBool(domain: "com.apple.dock", key: "scroll-to-open") {
             settings.scrollToOpen = value
         }
+        if let value = await readString(domain: "com.apple.dock", key: "orientation"),
+           let position = DockPosition(rawValue: value) {
+            settings.position = position
+        }
+        if let value = await readInt(domain: "com.apple.dock", key: "tilesize") {
+            settings.tileSize = min(max(value, 16), 128)
+        }
+        if let value = await readBool(domain: "com.apple.dock", key: "magnification") {
+            settings.magnification = value
+        }
+        if let value = await readInt(domain: "com.apple.dock", key: "largesize") {
+            settings.largeSize = min(max(value, 16), 128)
+        }
+        if let value = await readBool(domain: "com.apple.dock", key: "show-recents") {
+            settings.hideRecents = !value
+        }
         return settings
     }
 
@@ -285,6 +307,22 @@ enum AssistantService {
     }
 }
 
+enum DockPosition: String, CaseIterable, Identifiable {
+    case left
+    case bottom
+    case right
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .left: "左"
+        case .bottom: "下"
+        case .right: "右"
+        }
+    }
+}
+
 struct DockSettings {
     var hideDelay = 0.18
     var lockSize = false
@@ -292,6 +330,11 @@ struct DockSettings {
     var useSuckEffect = false
     var singleAppMode = false
     var scrollToOpen = true
+    var position: DockPosition = .bottom
+    var tileSize = 48
+    var magnification = false
+    var largeSize = 64
+    var hideRecents = false
 }
 
 struct ScreenshotSettings {
