@@ -197,7 +197,16 @@ enum AssistantService {
         try await CommandRunner.run("/usr/bin/xcode-select", ["--install"])
     }
 
+    static func flushDNS() async throws -> CommandResult {
+        try await CommandRunner.runShell("""
+        /usr/bin/dscacheutil -flushcache
+        /usr/bin/killall -HUP mDNSResponder || true
+        """, asAdmin: true)
+    }
 
+    static func rebuildSpotlight() async throws -> CommandResult {
+        try await CommandRunner.runShell("/usr/bin/mdutil -E /", asAdmin: true)
+    }
 
     static func loadDockSettings() async -> DockSettings {
         var settings = DockSettings()
