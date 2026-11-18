@@ -124,9 +124,52 @@ enum AssistantService {
         return settings
     }
 
+    static func menuBarApplyScript(settings: MenuBarSettings) -> String {
+        let showDate = settings.showDate ? 1 : 2
+        return """
+        /usr/bin/defaults write com.apple.menuextra.clock Show24Hour -bool \(settings.show24Hour)
+        /usr/bin/defaults write com.apple.menuextra.clock ShowSeconds -bool \(settings.showSeconds)
+        /usr/bin/defaults write com.apple.menuextra.clock ShowDayOfWeek -bool \(settings.showDayOfWeek)
+        /usr/bin/defaults write com.apple.menuextra.clock ShowDate -int \(showDate)
+        /usr/bin/defaults -currentHost write com.apple.controlcenter BatteryShowPercentage -bool \(settings.showBatteryPercent)
+        /usr/bin/killall SystemUIServer || true
+        """
+    }
 
+    static func updateMenuBar(settings: MenuBarSettings) async throws -> CommandResult {
+        try await CommandRunner.runShell(menuBarApplyScript(settings: settings))
+    }
 
+    static func resetMenuBar() async throws -> CommandResult {
+        try await CommandRunner.runShell("""
+        /usr/bin/defaults delete com.apple.menuextra.clock Show24Hour 2>/dev/null || true
+        /usr/bin/defaults delete com.apple.menuextra.clock ShowSeconds 2>/dev/null || true
+        /usr/bin/defaults delete com.apple.menuextra.clock ShowDayOfWeek 2>/dev/null || true
+        /usr/bin/defaults delete com.apple.menuextra.clock ShowDate 2>/dev/null || true
+        /usr/bin/defaults -currentHost delete com.apple.controlcenter BatteryShowPercentage 2>/dev/null || true
+        /usr/bin/killall SystemUIServer || true
+        """)
+    }
 
+    static func loadMenuBarSettings() async -> MenuBarSettings {
+        var settings = MenuBarSettings()
+        if let value = await readBool(domain: "com.apple.menuextra.clock", key: "Show24Hour") {
+            settings.show24Hour = value
+        }
+        if let value = await readBool(domain: "com.apple.menuextra.clock", key: "ShowSeconds") {
+            settings.showSeconds = value
+        }
+        if let value = await readBool(domain: "com.apple.menuextra.clock", key: "ShowDayOfWeek") {
+            settings.showDayOfWeek = value
+        }
+        if let value = await readInt(domain: "com.apple.menuextra.clock", key: "ShowDate") {
+            settings.showDate = value != 2
+        }
+        if let value = await readBool(domain: "com.apple.controlcenter", key: "BatteryShowPercentage", currentHost: true) {
+            settings.showBatteryPercent = value
+        }
+        return settings
+    }
 
     @MainActor
     static func copyScript(_ script: String, title: String, into appState: AppState) {
@@ -265,6 +308,14 @@ struct FinderSettings {
     var showPathBar = false
     var showStatusBar = false
     var showAllExtensions = false
+}
+
+struct MenuBarSettings {
+    var show24Hour = true
+    var showSeconds = false
+    var showDayOfWeek = true
+    var showDate = true
+    var showBatteryPercent = false
 }
 
 enum ScreenshotFormat: String, CaseIterable, Identifiable {

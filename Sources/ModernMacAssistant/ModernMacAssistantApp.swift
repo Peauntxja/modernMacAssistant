@@ -8,7 +8,7 @@ struct ModernMacAssistantApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(appState)
-                .frame(minWidth: 700, idealWidth: 760, minHeight: 500, idealHeight: 560)
+                .frame(minWidth: 820, idealWidth: 860, minHeight: 500, idealHeight: 560)
         }
         .windowStyle(.titleBar)
         .commands {

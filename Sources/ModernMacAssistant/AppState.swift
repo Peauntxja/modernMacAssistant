@@ -53,6 +53,7 @@ enum AssistantSection: String, CaseIterable, Identifiable {
     case launchpad = "启动台"
     case screenshots = "截图"
     case finder = "Finder"
+    case menuBar = "菜单栏"
     case apps = "修复"
     case system = "信息"
 
@@ -64,6 +65,7 @@ enum AssistantSection: String, CaseIterable, Identifiable {
         case .launchpad: "square.grid.3x3"
         case .screenshots: "camera.viewfinder"
         case .finder: "folder"
+        case .menuBar: "menubar.rectangle"
         case .apps: "app.badge.checkmark"
         case .system: "desktopcomputer"
         }
