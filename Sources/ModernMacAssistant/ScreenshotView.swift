@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct ScreenshotView: View {
     @EnvironmentObject private var appState: AppState
@@ -48,6 +49,15 @@ struct ScreenshotView: View {
                         if let url = FilePicker.pickFolder() {
                             settings.saveLocation = url
                         }
+                    }
+                    SecondaryButton(title: "打开", symbol: "arrow.up.right.square") {
+                        NSWorkspace.shared.open(settings.saveLocation)
+                        appState.append(.init(title: "打开截图目录", status: .success, detail: settings.saveLocation.path))
+                    }
+                    SecondaryButton(title: "复制路径", symbol: "doc.on.doc") {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(settings.saveLocation.path, forType: .string)
+                        appState.append(.init(title: "复制截图路径", status: .success, detail: "已复制到剪贴板"))
                     }
                 }
 
